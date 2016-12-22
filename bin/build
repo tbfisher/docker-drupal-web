@@ -1,0 +1,68 @@
+#!/bin/bash
+
+set -e
+
+usage() {
+    echo "Usage: $0 [-n] [-d diff] major_version minor_version patch_version" 1>&2
+    exit 1
+}
+
+# Options
+cache=""
+while getopts ":d:n" opt; do
+  case $opt in
+    n)
+      cache=--no-cache
+      ;;
+    d)
+      diff=$OPTARG
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+# Positional arguments
+version_major=${@:$OPTIND:1}
+version_minor=${@:$OPTIND+1:1}
+version_patch=${@:$OPTIND+2:1}
+if [ -z "${version_major}" ] || [ -z "${version_minor}" ] || [ -z "${version_patch}" ]; then
+    usage
+fi
+
+v_minor=$version_major.$version_minor
+v_full=$version_major.$version_minor.$version_patch
+echo
+echo Building $v_full
+echo
+
+set -o xtrace
+
+## Dockerfile
+
+write_version () {
+    sed -i '' -E "s/^FROM nginx:([0-9\.]+)$/FROM nginx:${v_full}/" $1
+}
+write_version Dockerfile
+
+## Build
+
+# pre-build config
+curl -L https://raw.githubusercontent.com/nginx/nginx/branches/stable-${v_minor}/conf/nginx.conf > \
+    conf/nginx.conf-default
+curl https://raw.githubusercontent.com/nginxinc/nginx-wiki/master/source/start/topics/recipes/drupal.rst | \
+    pandoc -f rst -t json | \
+    jq -r '.blocks | map(select(.t == "CodeBlock"))[0].c | last' > \
+    conf/drupal.conf-default
+
+# build image
+docker build $cache -f Dockerfile -t drupal-nginx:${v_full} .
+
+set +e
+
+# examine config
+if [[ -n "$diff" ]]; then
+    $diff conf/nginx.conf-default conf/nginx.conf
+    $diff conf/drupal.conf-default conf/drupal.conf
+fi
