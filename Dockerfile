@@ -8,9 +8,8 @@ COPY conf/conf-enabled/default.conf /usr/local/apache2/conf/conf-enabled/default
 
 # Configurable virtualhost.
 ENV WEB_DOCROOT="/var/www/html"
-# ENV WEB_DRUPAL_PRIVATE_FILES="^/sites/.*/private/"
-# COPY conf/docker-entrypoint.sh /usr/local/bin/
-# ENTRYPOINT ["docker-entrypoint.sh"]
+COPY conf/docker-entrypoint.sh /usr/local/bin/
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 RUN mkdir -p ${WEB_DOCROOT} && \
     echo '<?php phpinfo();' > ${WEB_DOCROOT}/index.php
@@ -22,3 +21,5 @@ RUN mkdir /var/www_files && \
     chown -R www-data:www-data /var/www_files && \
     chmod 775 /var/www_files
 VOLUME /var/www_files
+
+CMD ["httpd-foreground"]
