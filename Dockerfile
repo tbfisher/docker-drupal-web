@@ -2,8 +2,8 @@ FROM nginx:1.8.1
 
 MAINTAINER Brian Fisher <tbfisher@gmail.com>
 
-COPY conf/nginx.conf /etc/nginx/nginx.conf
-COPY conf/drupal.conf /etc/nginx/conf.d/default.conf
+COPY conf/nginx.conf-development /etc/nginx/nginx.conf
+COPY conf/drupal.conf-development /etc/nginx/conf.d/default.conf
 
 # Configurable virtualhost.
 ENV WEB_DOCROOT="/var/www/html"
