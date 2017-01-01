@@ -3,8 +3,8 @@ FROM httpd:2.4.25
 MAINTAINER Brian Fisher <tbfisher@gmail.com>
 
 RUN cp /usr/local/apache2/conf/httpd.conf /usr/local/apache2/conf/httpd.conf-default
-COPY conf/httpd.conf /usr/local/apache2/conf/httpd.conf
-COPY conf/conf-enabled/default.conf /usr/local/apache2/conf/conf-enabled/default.conf
+COPY conf/httpd.conf-development /usr/local/apache2/conf/httpd.conf
+COPY conf/conf-enabled/default.conf-development /usr/local/apache2/conf/conf-enabled/default.conf
 
 # Configurable virtualhost.
 ENV WEB_DOCROOT="/var/www/html"
