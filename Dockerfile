@@ -6,13 +6,13 @@ COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY conf/drupal.conf /etc/nginx/conf.d/default.conf
 
 # Configurable virtualhost.
-ENV NGINX_DOCROOT="/var/www/html"
-ENV NGINX_DRUPAL_PRIVATE_FILES="^/sites/.*/private/"
+ENV WEB_DOCROOT="/var/www/html"
+ENV WEB_DRUPAL_PRIVATE_FILES="^/sites/.*/private/"
 COPY conf/docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 
-RUN mkdir -p ${NGINX_DOCROOT} && \
-    echo '<?php phpinfo();' > ${NGINX_DOCROOT}/index.php
+RUN mkdir -p ${WEB_DOCROOT} && \
+    echo '<?php phpinfo();' > ${WEB_DOCROOT}/index.php
 
 # Configure directories for drupal.
 RUN mkdir /var/www_files && \
