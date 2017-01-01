@@ -42,27 +42,22 @@ set -o xtrace
 ## Dockerfile
 
 write_version () {
-    sed -i '' -E "s/^FROM nginx:([0-9\.]+)$/FROM nginx:${v_full}/" $1
+    sed -i '' -E "s/^FROM httpd:([0-9\.]+)$/FROM httpd:${v_full}/" $1
 }
 write_version Dockerfile
 
 ## Build
 
-# pre-build config
-curl -L https://raw.githubusercontent.com/nginx/nginx/branches/stable-${v_minor}/conf/nginx.conf > \
-    conf/nginx.conf-default
-curl https://raw.githubusercontent.com/nginxinc/nginx-wiki/master/source/start/topics/recipes/drupal.rst | \
-    pandoc -f rst -t json | \
-    jq -r '.blocks | map(select(.t == "CodeBlock"))[0].c | last' > \
-    conf/drupal.conf-default
-
 # build image
-docker build $cache -f Dockerfile -t drupal-web:nginx-${v_full} .
+docker build $cache -f Dockerfile -t drupal-web:httpd-${v_full} .
+
+# post-build config
+docker run --rm drupal-web:httpd-${v_full} /bin/cat /usr/local/apache2/conf/httpd.conf-default > \
+    conf/httpd.conf-default
 
 set +e
 
 # examine config
 if [[ -n "$diff" ]]; then
-    $diff conf/nginx.conf-default conf/nginx.conf
-    $diff conf/drupal.conf-default conf/drupal.conf
+    $diff conf/httpd.conf-default conf/httpd.conf
 fi
