@@ -57,7 +57,7 @@ curl https://raw.githubusercontent.com/nginxinc/nginx-wiki/master/source/start/t
     conf/drupal.conf-default
 
 # build image
-docker build $cache -f Dockerfile -t drupal-nginx:${v_full} .
+docker build $cache -f Dockerfile -t drupal-web:nginx-${v_full} .
 
 set +e
 
