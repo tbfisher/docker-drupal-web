@@ -15,12 +15,10 @@ RUN mkdir -p ${WEB_DOCROOT} && \
     echo '<?php phpinfo();' > ${WEB_DOCROOT}/index.php
 
 # Configure directories for drupal.
-RUN mkdir /var/www_files && \
-    mkdir -p /var/www_files/public && \
+RUN mkdir -p /var/www_files/public && \
     mkdir -p /var/www_files/private && \
-    chown -R www-data:www-data /var/www_files && \
-    chmod 775 /var/www_files
-VOLUME /var/www_files
+    chown www-data:www-data /var/www_files/* && \
+    chmod 775 /var/www_files/*
 
 # Remove 443
 EXPOSE 80
