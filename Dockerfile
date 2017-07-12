@@ -1,4 +1,4 @@
-FROM httpd:2.4.25
+FROM httpd:2.4.27
 
 MAINTAINER Brian Fisher <tbfisher@gmail.com>
 
