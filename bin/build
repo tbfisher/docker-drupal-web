@@ -69,6 +69,6 @@ set +e
 
 # examine config
 if [[ -n "$diff" ]]; then
-    $diff conf/nginx.conf-default conf/nginx.conf-development
-    $diff conf/drupal.conf-default conf/drupal.conf-development
+    $diff conf/nginx.conf-default       conf/nginx.conf-development            &
+    $diff conf/drupal.conf-default      conf/drupal.conf-development           &
 fi
