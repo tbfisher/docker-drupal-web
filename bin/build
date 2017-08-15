@@ -65,5 +65,5 @@ set +e
 
 # examine config
 if [[ -n "$diff" ]]; then
-    $diff conf/httpd.conf-default conf/httpd.conf-development
+    $diff conf/httpd.conf-default       conf/httpd.conf-development            &
 fi
