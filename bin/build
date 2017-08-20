@@ -4,38 +4,57 @@
 set -eu
 # exit early for errors in pipelines
 set -o pipefail
-# debugging
-# set -x
 
 usage() {
-    echo "Usage: $0 [-n] [-d diff] major_version minor_version patch_version" 1>&2
-    exit 1
+    cat << EOF
+usage: $0 [-n] [-d diff] major_version minor_version patch_version
+EOF
 }
 
 # Options
-cache=""
-diff=""
-while getopts ":d:n" opt; do
-  case $opt in
-    n)
-      cache=--no-cache
-      ;;
-    d)
-      diff=$OPTARG
-      ;;
-    *)
-      usage
-      ;;
-  esac
+cache=
+diff=
+run_tests=
+while getopts ":nd:tvh" opt; do
+    case $opt in
+        n)
+            cache=--no-cache
+            ;;
+        d)
+            diff=$OPTARG
+            ;;
+        t)
+            run_tests=yes
+            ;;
+        v)
+            set -x
+            ;;
+        h)
+            usage
+            exit
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            usage
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
 done
 
 # Positional arguments
-version_major=${@:$OPTIND:1}
-version_minor=${@:$OPTIND+1:1}
-version_patch=${@:$OPTIND+2:1}
-if [ -z "${version_major}" ] || [ -z "${version_minor}" ] || [ -z "${version_patch}" ]; then
+shift "$((OPTIND-1))"
+if [ "$#" -ne 3 ]; then
+    echo "Illegal number of parameters"
     usage
+    exit 1
 fi
+version_major=$1
+version_minor=$2
+version_patch=$3
 
 v_minor=$version_major.$version_minor
 v_full=$version_major.$version_minor.$version_patch
@@ -43,11 +62,11 @@ echo
 echo Building "$v_full"
 echo
 
-set -o xtrace
+# set -o xtrace
 
 ## Dockerfile
 
-write_version () {
+write_version() {
     sed -i '' -E "s/^FROM nginx:([0-9\.]+)$/FROM nginx:${v_full}/" "$1"
 }
 write_version Dockerfile
@@ -64,6 +83,39 @@ curl https://raw.githubusercontent.com/nginxinc/nginx-wiki/master/source/start/t
 
 # build image
 docker build $cache -f Dockerfile -t "drupal-web:nginx-${v_full}" .
+
+# tests
+if [[ ! -z "$run_tests" ]]; then
+
+    network=docker-drupal-web
+    docker network create -d bridge "$network" > /dev/null
+    php=$(docker run --rm -d --network "$network" --name php -v /var/www/html tbfisher/drupal-php:7.1-dev)
+    nginx=$(docker run --rm -d -P --expose 80 --network "$network" --volumes-from "$php" -v /var/www/html -v /etc/nginx "drupal-web:nginx-${v_full}")
+
+    # https://github.com/yandex/gixy
+    test_gixy=$(docker run --rm --volumes-from "$nginx" yandex/gixy -f json /etc/nginx/nginx.conf)
+
+    # curl phpinfo
+    docker exec "$nginx" /bin/sh -c 'apt-get -qq update; apt-get -yqq install curl; echo "<?php phpinfo();" > /var/www/html/index.php' > /dev/null
+    test_phpinfo=$(docker exec "$nginx" /bin/sh -c 'curl -sSIL http://localhost | grep "HTTP/1.1 200 OK"' | sed -e 's/[[:space:]]*$//')
+
+    # clean up
+    docker rm -f "$nginx" "$php" > /dev/null
+    docker network rm "$network" > /dev/null
+
+    # test output
+    if [ "$(echo "$test_gixy" | jq 'length')" != 0 ]; then
+        echo gixy test failed.
+        echo "$test_gixy" | jq
+        exit 1
+    fi
+    if [ "$test_phpinfo" != 'HTTP/1.1 200 OK' ]; then
+        echo curl phpinfo failed.
+        exit 1
+    fi
+
+    echo tests pass.
+fi
 
 set +e
 
