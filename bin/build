@@ -4,50 +4,65 @@
 set -eu
 # exit early for errors in pipelines
 set -o pipefail
-# debugging
-# set -x
 
 usage() {
-    echo "Usage: $0 [-n] [-d diff] major_version minor_version patch_version" 1>&2
-    exit 1
+    cat << EOF
+usage: $0 [-n] [-d diff] major_version minor_version patch_version
+EOF
 }
 
 # Options
-cache=""
-diff=""
-while getopts ":d:n" opt; do
-  case $opt in
-    n)
-      cache=--no-cache
-      ;;
-    d)
-      diff=$OPTARG
-      ;;
-    *)
-      usage
-      ;;
-  esac
+cache=
+diff=
+while getopts ":nd:vh" opt; do
+    case $opt in
+        n)
+            cache=--no-cache
+            ;;
+        d)
+            diff=$OPTARG
+            ;;
+        v)
+            set -x
+            ;;
+        h)
+            usage
+            exit
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            usage
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
 done
 
 # Positional arguments
-version_major=${@:$OPTIND:1}
-version_minor=${@:$OPTIND+1:1}
-version_patch=${@:$OPTIND+2:1}
-if [ -z "${version_major}" ] || [ -z "${version_minor}" ] || [ -z "${version_patch}" ]; then
+shift "$((OPTIND-1))"
+if [ "$#" -ne 3 ]; then
+    echo "Illegal number of parameters"
     usage
+    exit 1
 fi
+version_major=$1
+version_minor=$2
+version_patch=$3
 
-v_minor=$version_major.$version_minor
+# v_minor=$version_major.$version_minor
 v_full=$version_major.$version_minor.$version_patch
 echo
 echo Building "$v_full"
 echo
 
-set -o xtrace
+# set -o xtrace
 
 ## Dockerfile
 
-write_version () {
+write_version() {
     sed -i '' -E "s/^FROM httpd:([0-9\.]+)$/FROM httpd:${v_full}/" "$1"
 }
 write_version Dockerfile
