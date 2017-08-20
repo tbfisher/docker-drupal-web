@@ -14,13 +14,17 @@ EOF
 # Options
 cache=
 diff=
-while getopts ":nd:vh" opt; do
+run_tests=
+while getopts ":nd:tvh" opt; do
     case $opt in
         n)
             cache=--no-cache
             ;;
         d)
             diff=$OPTARG
+            ;;
+        t)
+            run_tests=yes
             ;;
         v)
             set -x
@@ -75,6 +79,31 @@ docker build $cache -f Dockerfile -t "drupal-web:httpd-${v_full}" .
 # post-build config
 docker run --rm "drupal-web:httpd-${v_full}" /bin/cat /usr/local/apache2/conf/httpd.conf-default > \
     conf/httpd.conf-default
+
+# tests
+if [[ ! -z "$run_tests" ]]; then
+
+    network=docker-drupal-web
+    docker network create -d bridge "$network" > /dev/null
+    php=$(docker run --rm -d --network "$network" --name php -v /var/www/html tbfisher/drupal-php:7.1-dev)
+    httpd=$(docker run --rm -d -P --expose 80 --network "$network" --volumes-from "$php" -v /var/www/html "drupal-web:httpd-${v_full}")
+
+    # curl phpinfo
+    docker exec "$httpd" /bin/sh -c 'apt-get -qq update; apt-get -yqq install curl; echo "<?php phpinfo();" > /var/www/html/index.php' > /dev/null
+    test_phpinfo=$(docker exec "$httpd" /bin/sh -c 'curl -sSIL http://localhost | grep "HTTP/1.1 200 OK"' | sed -e 's/[[:space:]]*$//')
+
+    # clean up
+    docker rm -f "$httpd" "$php" > /dev/null
+    docker network rm "$network" > /dev/null
+
+    # test output
+    if [ "$test_phpinfo" != 'HTTP/1.1 200 OK' ]; then
+        echo curl phpinfo failed.
+        exit 1
+    fi
+
+    echo tests pass.
+fi
 
 set +e
 
