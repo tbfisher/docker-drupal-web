@@ -7,7 +7,14 @@ set -o pipefail
 
 usage() {
     cat << EOF
-usage: $0 [-n] [-d diff] major_version minor_version patch_version
+usage: $0 [options] major_version minor_version patch_version
+
+OPTIONS:
+    -n        docker build with --no-cache.
+    -d        Diff files using supplied utility e.g. diff.
+    -t        Run tests.
+    -v        Verbose output, prints every command to stdout.
+    -h        Prints this help message.
 EOF
 }
 
