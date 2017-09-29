@@ -8,6 +8,7 @@ COPY conf/conf-enabled/default.conf-development /usr/local/apache2/conf/conf-ena
 
 # Configurable virtualhost.
 ENV WEB_DOCROOT="/var/www/html"
+ENV WEB_PHPFPM="php:9000"
 COPY conf/docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
 

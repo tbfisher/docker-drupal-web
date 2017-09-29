@@ -12,9 +12,9 @@
     # This is to forward all PHP to php-fpm.
     <FilesMatch \.php$>
         # Apache 2.4.10+
-        SetHandler "proxy:fcgi://php:9000/"
+        SetHandler "proxy:fcgi://%WEB_PHPFPM%/"
     </FilesMatch>
-    <Proxy fcgi://php:9000>
+    <Proxy fcgi://%WEB_PHPFPM%>
         ProxySet connectiontimeout=5 timeout=240
     </Proxy>
 
