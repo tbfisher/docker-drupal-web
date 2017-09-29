@@ -91,17 +91,24 @@ docker run --rm "drupal-web:httpd-${v_full}" /bin/cat /usr/local/apache2/conf/ht
 if [[ ! -z "$run_tests" ]]; then
 
     network=docker-drupal-web
+    set +e
     docker network create -d bridge "$network" > /dev/null
+    set -e
     php=$(docker run --rm -d --network "$network" --name php -v /var/www/html tbfisher/drupal-php:7.1-dev)
+    docker logs "$php"
     httpd=$(docker run --rm -d -P --expose 80 --network "$network" --volumes-from "$php" -v /var/www/html "drupal-web:httpd-${v_full}")
+    docker logs "$httpd"
 
     # curl phpinfo
     docker exec "$httpd" /bin/sh -c 'apt-get -qq update; apt-get -yqq install curl; echo "<?php phpinfo();" > /var/www/html/index.php' > /dev/null
     test_phpinfo=$(docker exec "$httpd" /bin/sh -c 'curl -sSIL http://localhost | grep "HTTP/1.1 200 OK"' | sed -e 's/[[:space:]]*$//')
 
     # clean up
-    docker rm -f "$httpd" "$php" > /dev/null
+    set +e
+    docker rm -f "$httpd" > /dev/null
+    docker rm -f "$php" > /dev/null
     docker network rm "$network" > /dev/null
+    set -e
 
     # test output
     if [ "$test_phpinfo" != 'HTTP/1.1 200 OK' ]; then
