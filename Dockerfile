@@ -7,6 +7,7 @@ COPY conf/drupal.conf-development /etc/nginx/conf.d/default.conf
 
 # Configurable virtualhost.
 ENV WEB_DOCROOT="/var/www/html"
+ENV WEB_PHPFPM="php:9000"
 ENV WEB_DRUPAL_PRIVATE_FILES="^/sites/.*/private/"
 COPY conf/docker-entrypoint.sh /usr/local/bin/
 ENTRYPOINT ["docker-entrypoint.sh"]
