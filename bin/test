@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# exit on error, unset vars
+set -eu
+# exit early for errors in pipelines
+set -o pipefail
+
+usage() {
+    cat << EOF
+usage: $0 [options]
+
+OPTIONS:
+    -v        Verbose output, prints every command to stdout.
+    -h        Prints this help message.
+EOF
+}
+
+sleep=2
+
+# Options
+while getopts ":nd:vh" opt; do
+    case $opt in
+        v)
+            set -x
+            ;;
+        h)
+            usage
+            exit
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            usage
+            exit 1
+            ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+# http get `<?php phpinfo()`
+http_test_200() {
+  set +e
+  result="$(curl -SsIL "$1")"
+  code=$(echo "$result" | grep '^HTTP/' | awk '{ print $2 }')
+  set -e
+  if [[ $code == '200' ]]; then
+    echo ok!
+  elif [[ "$result" ]]; then
+    echo "request to $1 failed:"
+    echo "$result"
+  fi
+}
+
+# https://github.com/yandex/gixy
+gixy() {
+    echo Running Gixy:
+    nginx=$(docker-compose ps -q webdev)
+    docker run --rm --volumes-from "$nginx" yandex/gixy /etc/nginx/nginx.conf
+}
+
+docker-compose up -d --build
+sleep "$sleep"
+echo testing dev:
+http_test_200 http://localhost:8080/
+gixy
+docker-compose down -v
