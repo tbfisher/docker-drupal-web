@@ -41,16 +41,17 @@ done
 
 # http get `<?php phpinfo()`
 http_test_200() {
-  set +e
-  result="$(curl -SsIL "$1")"
-  code=$(echo "$result" | grep '^HTTP/' | awk '{ print $2 }')
-  set -e
-  if [[ $code == '200' ]]; then
-    echo ok!
-  elif [[ "$result" ]]; then
-    echo "request to $1 failed:"
-    echo "$result"
-  fi
+    set +e
+    result="$(curl -SsIL "$1")"
+    code=$(echo "$result" | grep '^HTTP/' | awk '{ print $2 }')
+    set -e
+    if [[ $code == '200' ]]; then
+        echo 'phpinfo() ok!'
+    elif [[ "$result" ]]; then
+        echo 'phpinfo() failed!'
+        echo "request to $1:"
+        echo "$result"
+    fi
 }
 
 # https://github.com/yandex/gixy
