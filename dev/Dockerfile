@@ -1,4 +1,4 @@
-FROM nginx:1.14.1
+FROM nginx:1.14.2
 
 MAINTAINER Brian Fisher <tbfisher@gmail.com>
 
