@@ -6,6 +6,8 @@ echo "Configured NGINX docroot to ${WEB_DOCROOT}."
 
 sed -i 's@%WEB_PHPFPM%@'"${WEB_PHPFPM}"'@' /etc/nginx/conf.d/*.conf
 echo "Configured PHP FPM to ${WEB_PHPFPM}."
+sed -i 's@%WEB_FASTCGI_BUFFERING%@'"${WEB_FASTCGI_BUFFERING}"'@' /etc/nginx/conf.d/*.conf
+echo "Configured PHP FPM to ${WEB_FASTCGI_BUFFERING}."
 sed -i 's@%WEB_FASTCGI_BUFFERS%@'"${WEB_FASTCGI_BUFFERS}"'@' /etc/nginx/conf.d/*.conf
 echo "Configured PHP FPM to ${WEB_FASTCGI_BUFFERS}."
 sed -i 's@%WEB_FASTCGI_BUFFER_SIZE%@'"${WEB_FASTCGI_BUFFER_SIZE}"'@' /etc/nginx/conf.d/*.conf
